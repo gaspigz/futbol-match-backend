@@ -1,53 +1,54 @@
+// schema.prisma
+datasource db {
+  provider = "postgresql" // o mysql/sqlite según uses
+  url      = env("DATABASE_URL")
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
 model User {
   id        Int      @id @default(autoincrement())
+  name      String
   username  String   @unique
   password  String
-  name      String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-
-  // Relations
-  tasks Task[] @relation("UserTasks")
+  fotoId    Int?     
+  foto      Foto?    @relation(fields: [fotoId], references: [id])
+  
+  pools     UsersPool[]
+  ratesGiven  Rate[] @relation("RatesGiven")
+  ratesReceived Rate[] @relation("RatesReceived")
 }
 
-model Task {
-  id          Int        @id @default(autoincrement())
-  title        String
-  description String
-  type        TaskType
-  status      TaskStatus @default(PENDING)
-  ownerId     Int
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  deletedAt   DateTime?
-
-  // Relations
-  owner User @relation("UserTasks", fields: [ownerId], references: [id])
+model Foto {
+  id   Int    @id @default(autoincrement())
+  url  String
+  
+  users User[]
 }
 
-enum Role {
-  USER
-  ADMIN
+model Pool {
+  id    Int         @id @default(autoincrement())
+  nombre String
+  users UsersPool[]
 }
 
-enum TaskType {
-  URGENT
-  MEDIUM
-  LOW
+model UsersPool {
+  id      Int  @id @default(autoincrement())
+  userId  Int
+  poolId  Int
+
+  user User @relation(fields: [userId], references: [id])
+  pool Pool @relation(fields: [poolId], references: [id])
 }
 
-enum TaskStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  ARCHIVED
+model Rate {
+  id         Int  @id @default(autoincrement())
+  creadorId  Int
+  receptorId Int
+  rate       Int
+
+  creador  User @relation("RatesGiven", fields: [creadorId], references: [id])
+  receptor User @relation("RatesReceived", fields: [receptorId], references: [id])
 }
